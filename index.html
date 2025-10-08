@@ -1,120 +1,92 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kaito Chatbot Thông minh</title>
-  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712105.png">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Monica Chatbot</title>
   <style>
-    :root {
-      --bg: #0f172a;
-      --panel: #111827;
-      --card: #1f2937;
-      --text: #e5e7eb;
-      --accent: #3b82f6;
-    }
-    body {
-      font-family: "Segoe UI", system-ui;
-      background: var(--bg);
-      color: var(--text);
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-    h1 {
-      color: var(--accent);
-      margin: 20px 0;
-    }
-    #chat-box {
-      width: 90%;
-      max-width: 600px;
-      background: var(--card);
-      padding: 16px;
-      border-radius: 10px;
-      overflow-y: auto;
-      height: 400px;
-      box-shadow: 0 0 10px #0004;
-    }
-    .msg {
-      margin: 10px 0;
-      padding: 10px 14px;
-      border-radius: 10px;
-      max-width: 80%;
-      white-space: pre-wrap;
-    }
-    .user {
-      background: #2563eb;
-      margin-left: auto;
-    }
-    .bot {
-      background: #1e293b;
-      margin-right: auto;
-    }
-    #input-area {
-      display: flex;
-      margin-top: 10px;
-      width: 90%;
-      max-width: 600px;
-    }
-    input {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #1e293b;
-      color: #e5e7eb;
-      outline: none;
-    }
-    button {
-      margin-left: 8px;
-      padding: 10px 14px;
-      background: var(--accent);
-      border: none;
-      border-radius: 8px;
-      color: white;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    button:hover {
-      background: #2563eb;
-    }
+    body{font-family:system-ui,Arial,Helvetica,sans-serif;background:#f6f7fb;margin:0}
+    .wrap{max-width:720px;margin:24px auto;background:#fff;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:16px}
+    #messages{height:60vh;overflow:auto;padding:8px 0}
+    .row{display:flex;margin:8px 0}
+    .me{justify-content:flex-end}
+    .bubble{max-width:70%;padding:10px 12px;border-radius:16px;white-space:pre-wrap;line-height:1.4}
+    .bubble.me{background:#111;color:#fff;border-bottom-right-radius:6px}
+    .bubble.bot{background:#f1f3f5;border-bottom-left-radius:6px}
+    form{display:flex;gap:8px;margin-top:8px}
+    input{flex:1;padding:12px;border:1px solid #e5e7eb;border-radius:12px}
+    button{padding:12px 16px;border:0;border-radius:12px;background:#111;color:#fff;cursor:pointer}
+    button:disabled{opacity:.6;cursor:not-allowed}
   </style>
 </head>
-  <script>
-const form = document.querySelector("form");
-const input = document.querySelector("#user-input");
-const chatBox = document.querySelector("#chat-box");
-
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const message = input.value.trim();
-  if (!message) return;
-
-  chatBox.innerHTML += `<div class="user">👤 ${message}</div>`;
-  input.value = "";
-
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages: [{ role: "user", content: message }] }),
-  });
-
-  const data = await res.json();
-  chatBox.innerHTML += `<div class="bot">🤖 ${data.reply}</div>`;
-});
-</script>
-
 <body>
-  <h1>🤖 Kaito Chatbot</h1>
-  <div id="chat-box"></div>
-  <div id="input-area">
-    <input type="text" id="user-input" placeholder="Nhập tin nhắn...">
-    <button id="send-btn">Gửi</button>
+  <div class="wrap">
+    <h2>🤖 Monica Chatbot</h2>
+
+    <div id="messages"></div>
+
+    <form id="chat-form">
+      <input id="user-input" placeholder="Nhập câu hỏi..." autocomplete="off" />
+      <button type="submit">Gửi</button>
+    </form>
+    <small id="status" style="color:#6b7280"></small>
   </div>
 
-  <script src="chat.js"></script>
+  <script>
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('user-input');
+    const box = document.getElementById('messages');
+    const statusEl = document.getElementById('status');
+
+    // giữ lịch sử hội thoại để gửi cho API
+    const messages = [
+      { role: "system", content: "Bạn là trợ lý thân thiện, trả lời ngắn gọn bằng tiếng Việt." }
+    ];
+
+    const add = (text, who) => {
+      const row = document.createElement('div');
+      row.className = 'row ' + (who === 'me' ? 'me' : '');
+      const b = document.createElement('div');
+      b.className = 'bubble ' + (who === 'me' ? 'me' : 'bot');
+      b.textContent = text;
+      row.appendChild(b);
+      box.appendChild(row);
+      box.scrollTop = box.scrollHeight;
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const q = input.value.trim();
+      if (!q) return;
+
+      // hiển thị tin người dùng
+      add(q, 'me');
+      messages.push({ role: 'user', content: q });
+      input.value = '';
+      input.focus();
+
+      // gọi API
+      statusEl.textContent = 'Đang gọi API...';
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages })
+        });
+        const data = await res.json();
+
+        if (data.error) throw new Error(data.error);
+        // LƯU Ý: backend của em trả về { content: "..." } chứ không phải { reply }
+        const reply = data.content || '(trống)';
+        add(reply, 'bot');
+        messages.push({ role: 'assistant', content: reply });
+      } catch (err) {
+        add('⚠️ Lỗi: ' + err.message, 'bot');
+        console.error(err);
+      } finally {
+        statusEl.textContent = '';
+      }
+    });
+  </script>
 </body>
 </html>
-
