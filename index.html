@@ -82,6 +82,30 @@
     }
   </style>
 </head>
+  <script>
+const form = document.querySelector("form");
+const input = document.querySelector("#user-input");
+const chatBox = document.querySelector("#chat-box");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const message = input.value.trim();
+  if (!message) return;
+
+  chatBox.innerHTML += `<div class="user">👤 ${message}</div>`;
+  input.value = "";
+
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: message }] }),
+  });
+
+  const data = await res.json();
+  chatBox.innerHTML += `<div class="bot">🤖 ${data.reply}</div>`;
+});
+</script>
+
 <body>
   <h1>🤖 Kaito Chatbot</h1>
   <div id="chat-box"></div>
@@ -93,3 +117,4 @@
   <script src="chat.js"></script>
 </body>
 </html>
+
